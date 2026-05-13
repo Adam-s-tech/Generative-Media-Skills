@@ -40,19 +40,20 @@ High-value skills that translate creative intent into technical directives.
 - **AI Clipping** (`/library/edit/ai-clipping/`) — Long video → ranked vertical short clips in one managed API call. Server-side transcription, virality ranking, dedupe, and face-tracked auto-crop — no local Whisper or LLM.
 - **YouTube Shorts** (`/library/social/youtube-shorts/`) — Platform-aware preset over AI Clipping (Shorts / TikTok / Reels / Feed defaults).
 
-Plus **40 ready-to-run workflow recipes** organized by output type — see [🎬 Recipe Pack](#-recipe-pack) below.
+Plus **41 ready-to-run workflow recipes** organized by output type — see [🎬 Recipe Pack](#-recipe-pack) below.
 
 ---
 
 ## 🎬 Recipe Pack
 
-Forty LLM-orchestrated workflow recipes that combine multiple `muapi-cli` calls into named end-to-end pipelines (e.g. *photo of person → 3D action figure*, *product photo → cinematic 10s ad*). Each skill is a SKILL.md the agent reads and follows; bring your own consuming agent (Claude Code, Cursor, MCP) — these are recipes, not bash wrappers.
+Forty-one LLM-orchestrated workflow recipes that combine multiple `muapi-cli` calls into named end-to-end pipelines (e.g. *photo of person → 3D action figure*, *product photo → cinematic 10s ad*). Each skill is a SKILL.md the agent reads and follows; bring your own consuming agent (Claude Code, Cursor, MCP) — these are recipes, not bash wrappers.
 
-**Motion / Video (14)**
+**Motion / Video (15)**
 
 | Skill | Description |
 |:---|:---|
 | [3D Logo Animation](library/motion/3d-logo-animation/) | Transform a 2D logo into a premium 3D version and animate it with professional cinematic effects |
+| [AI Fight Scene Generator](library/motion/ai-fight-scene/) | High-cut-density action / fight scene — 16-cell storyboard image drives Seedance 2.0 i2v for shot-by-shot choreography |
 | [Animal Vlogger Video](library/motion/animal-video-generator/) | Hilarious, ultra-realistic anthropomorphic-animal vlogger acting like a human in a real-world setting |
 | [Cartoon Dance Animation](library/motion/cartoon-dance-animation/) | Convert a photo into a Pixar-style 3D cartoon, then animate using a reference dance/motion video |
 | [Character Story Video](library/motion/character-story-video/) | Multi-part animated story video — establish a consistent character then animate sequential scenes |
