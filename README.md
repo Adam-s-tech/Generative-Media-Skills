@@ -4,7 +4,7 @@
 A high-performance, schema-driven architecture for AI agents to generate, edit, and display professional-grade images, videos, and audio — powered by the [muapi-cli](https://github.com/SamurAIGPT/muapi-cli).
 
 
-[🚀 Get Started](#-quick-start) | [🎨 Expert Library](#-expert-library) | [⚙️ Core Primitives](#-core-primitives) | [🤖 MCP Server](#-mcp-server) | [📖 Reference](#-schema-reference)
+[🚀 Get Started](#-quick-start) | [🎬 Recipe Pack](#-recipe-pack) | [🎨 Expert Library](#-expert-library) | [⚙️ Core Primitives](#-core-primitives) | [🤖 MCP Server](#-mcp-server) | [📖 Reference](#-schema-reference)
 
 ---
 
@@ -39,6 +39,71 @@ High-value skills that translate creative intent into technical directives.
 - **Seedance 2 (Doubao Video)** (`/library/motion/seedance-2/`) — Director-level cinematic video generation with text-to-video, image-to-video, and video extension with native audio-video sync.
 - **AI Clipping** (`/library/edit/ai-clipping/`) — Long video → ranked vertical short clips in one managed API call. Server-side transcription, virality ranking, dedupe, and face-tracked auto-crop — no local Whisper or LLM.
 - **YouTube Shorts** (`/library/social/youtube-shorts/`) — Platform-aware preset over AI Clipping (Shorts / TikTok / Reels / Feed defaults).
+
+Plus **40 ready-to-run workflow recipes** organized by output type — see [🎬 Recipe Pack](#-recipe-pack) below.
+
+---
+
+## 🎬 Recipe Pack
+
+Forty LLM-orchestrated workflow recipes that combine multiple `muapi-cli` calls into named end-to-end pipelines (e.g. *photo of person → 3D action figure*, *product photo → cinematic 10s ad*). Each skill is a SKILL.md the agent reads and follows; bring your own consuming agent (Claude Code, Cursor, MCP) — these are recipes, not bash wrappers.
+
+**Motion / Video (14)**
+
+| Skill | Description |
+|:---|:---|
+| [3D Logo Animation](library/motion/3d-logo-animation/) | Transform a 2D logo into a premium 3D version and animate it with professional cinematic effects |
+| [Animal Vlogger Video](library/motion/animal-video-generator/) | Hilarious, ultra-realistic anthropomorphic-animal vlogger acting like a human in a real-world setting |
+| [Cartoon Dance Animation](library/motion/cartoon-dance-animation/) | Convert a photo into a Pixar-style 3D cartoon, then animate using a reference dance/motion video |
+| [Character Story Video](library/motion/character-story-video/) | Multi-part animated story video — establish a consistent character then animate sequential scenes |
+| [Drone-Style Video](library/motion/drone-style-video/) | Aerial drone-perspective footage — bird's-eye sweeps, orbit shots, and flyover sequences |
+| [Giant Product Showcase](library/motion/giant-product-showcase/) | Dramatic giant-scale product visual (building-sized object next to a person), optionally animated |
+| [Jewelry Product Video](library/motion/jewelry-product-video/) | Luxury jewelry ad with high-end commercial cinematography and detailed macro animation |
+| [Music Video](library/motion/music-video/) | Short music video from a song theme — keyframes, animation per beat, matching music track |
+| [One-Shot Video](library/motion/one-shot-video/) | Single continuous cinematic shot — no cuts, one seamless flowing scene |
+| [Cinematic Product Ad](library/motion/product-ad-cinematic/) | Cinematic 5–10s product ad from a product photo + brand brief |
+| [Product Showcase Video](library/motion/product-showcase-video/) | Dynamic product showcase with explosive ingredient arrangement + realistic motion animation |
+| [Product Video Ad Maker](library/motion/product-video-ad-maker/) | High-end cinematic product video ad starting from a simple product photo |
+| [Talking Baby Video](library/motion/talking-baby-video/) | Viral-style talking-baby video with custom costumes and scripts |
+| [UGC Lifestyle Try-On](library/motion/ugc-lifestyle-try-on/) | UGC-style lifestyle photos & video of a person using your product — authentic, social-native |
+
+**Social (5)**
+
+| Skill | Description |
+|:---|:---|
+| [Instagram Post](library/social/instagram-post/) | Polished on-brand Instagram post — hero image + caption + hashtags |
+| [Product Campaign Pack](library/social/product-campaign/) | Full multi-channel campaign — hero visuals, social assets, short ad video, platform crops |
+| [RedNote Cover](library/social/rednote-cover/) | Xiaohongshu (小红书) cover image — vibrant lifestyle aesthetic with typography overlay |
+| [Social Media Pack](library/social/social-pack/) | Re-render a hero image into Instagram / TikTok / Shorts / X aspect ratios |
+| [UGC Ads Workflow](library/social/ugc-ads-workflow/) | UGC video ad pipeline — combine selfie + product image, write script, animate |
+
+**Visual / Images & Design (21)**
+
+| Skill | Description |
+|:---|:---|
+| [Action Figure Generator](library/visual/action-figure-generator/) | Convert a photo of a person into a custom 3D action figure with collectible toy packaging |
+| [Ad Creative Set](library/visual/ad-creative/) | High-converting ad set — hero image, copy variations, platform crops for Meta / Google / LinkedIn |
+| [Amazon Product Listing Pack](library/visual/amazon-product-listing/) | Full Amazon listing image set — hero, lifestyle, infographic, comparison/detail closeups |
+| [Blog Header](library/visual/blog-header/) | Professional 1200×628 blog header image with optional title composition guidance |
+| [Brand Kit](library/visual/brand-kit/) | Cohesive brand visual kit — logo concept, color palette, typography pairings |
+| [Brochure Designer](library/visual/brochures/) | Multi-page brochure — cover, inner spread, back — for business, real estate, events, launches |
+| [Couple Grid Creator](library/visual/couple-grid-creator/) | Stylized 6-box grid of a couple in romantic poses, each pose framed inside cardboard packaging |
+| [Brand Design Guide](library/visual/design-guide/) | Comprehensive design guide — palette, typography, UI components, visual identity rules |
+| [Fashion Try-On](library/visual/fashion-try-on/) | Virtually try outfits by combining a person's photo + clothing item, optional fashion model video |
+| [Floor Plan Rendering](library/visual/floor-plan-rendering/) | Design a 2D floor plan and convert into a realistic 3D architectural rendering |
+| [Interior Design](library/visual/interior-design/) | Pro interior design visualizations — redesign rooms, generate concepts, visualize furniture styles |
+| [Interior Design Visualizer](library/visual/interior-design-visualizer/) | Generate an empty room and fill it with stylish furniture / decor; or redesign an existing room |
+| [Keyboard Art Maker](library/visual/keyboard-art-maker/) | Artistic top-down photos of keyboard keycaps arranged to spell custom messages |
+| [Logo + Branding Package](library/visual/logo-branding/) | Logo + full branding package — variations (dark/light/icon), palette, mockups |
+| [Logo Generator](library/visual/logo-generator/) | Quick single-shot polished logo — fast, clean vector aesthetic with accurate brand-name text |
+| [Multi-Angle Reshoot](library/visual/multi-angle-reshoot/) | Re-render a subject from dramatic camera angles (fish-eye, bird's-eye, low, macro) — identity preserved |
+| [Multi-Angle Shots](library/visual/multi-angle-shots/) | Full multi-angle product shot set — front, side, back, top-down, 45° |
+| [Selfie with Celebrities](library/visual/selfie-with-celebrities/) | Realistic behind-the-scenes selfie of the user with a celebrity; optional cinematic long-take |
+| [Storyboard Generator](library/visual/storyboard/) | Generate N keyframes for a short story or scene sequence (image only, no video) |
+| [URL to Design](library/visual/url-to-design/) | Analyze a website URL and generate a redesigned, improved UI with modern aesthetics |
+| [YouTube Thumbnail](library/visual/youtube-thumbnail/) | High-CTR YouTube thumbnail — striking imagery, bold text placement, emotional face/subject |
+
+Each recipe declares its `inputs` and a `Steps` body. Pass the inputs and let your agent execute the steps via `muapi` CLI calls (or raw API for endpoints that don't yet have a CLI alias — see the per-skill *Notes for the Executing Agent* footer).
 
 ---
 
