@@ -61,5 +61,5 @@ Present the generated chibi collage to the user. Suggest variations they can try
 - This recipe is LLM-orchestrated: read each phase, gather any missing inputs from the user, then call `muapi` CLI commands. Use `muapi auth configure` first if `MUAPI_API_KEY` is unset.
 - For model IDs without a CLI alias yet, fall back to the raw endpoint via `curl -X POST https://api.muapi.ai/api/v1/<endpoint> -H "x-api-key: $MUAPI_API_KEY" -H 'content-type: application/json' -d '{...}'` and poll with `muapi predict wait <request_id>`.
 - Substitute `{{input_name}}` placeholders with the user's actual inputs before issuing each call.
-- Source schema reference: `gpt-image-v2-edit` from the EachLabs workflow JSON maps to `gpt-image-2-image-to-image` in the muapi catalog.
+- Source schema reference: `gpt-image-v2-edit` maps to `gpt-image-2-image-to-image` in the muapi catalog.
 - The output is intentionally 9:16 (2160×3840) so it's ready for IG Stories / Reels / TikTok / YT Shorts without re-cropping.
