@@ -48,7 +48,7 @@ Plus **41 ready-to-run workflow recipes** organized by output type — see [🎬
 
 Forty-one LLM-orchestrated workflow recipes that combine multiple `muapi-cli` calls into named end-to-end pipelines (e.g. *photo of person → 3D action figure*, *product photo → cinematic 10s ad*). Each skill is a SKILL.md the agent reads and follows; bring your own consuming agent (Claude Code, Cursor, MCP) — these are recipes, not bash wrappers.
 
-**Motion / Video (15)**
+**Motion / Video (16)**
 
 | Skill | Description |
 |:---|:---|
@@ -67,6 +67,7 @@ Forty-one LLM-orchestrated workflow recipes that combine multiple `muapi-cli` ca
 | [Product Video Ad Maker](library/motion/product-video-ad-maker/) | High-end cinematic product video ad starting from a simple product photo |
 | [Talking Baby Video](library/motion/talking-baby-video/) | Viral-style talking-baby video with custom costumes and scripts |
 | [UGC Lifestyle Try-On](library/motion/ugc-lifestyle-try-on/) | UGC-style lifestyle photos & video of a person using your product — authentic, social-native |
+| [UGC Video Factory](library/motion/ugc-video-factory/) | Person photo + product photo + script → 10s vertical 9:16 UGC video ad with native dialogue (Nano-Banana Pro Edit → Seedance 2.0 VIP i2v) |
 
 **Social (5)**
 
