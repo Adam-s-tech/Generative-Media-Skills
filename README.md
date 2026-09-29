@@ -1,5 +1,12 @@
 # Open Dots: Open-Source Alternative to OpenAI Dots
 
+
+<p align="center">
+  <video src="https://github.com/Anil-matcha/open-dots/raw/main/assets/open-dots-demo.mp4" poster="assets/open-dots-demo-poster.png" controls muted width="800"></video>
+</p>
+
+<p align="center"><a href="assets/open-dots-demo.mp4">▶ Watch the 45-second demo</a></p>
+
 **Open Dots is an open-source alternative to OpenAI Dots:** a self-hosted AI workspace for chat, tool use, approvals, connectors, and computer tasks. It brings model conversations, a governed action gateway, approval prompts, and an optional isolated browser runtime into one local-first app.
 
 Open Dots is independently built and is not affiliated with or endorsed by OpenAI, xAI, or any model provider. It offers a self-hostable, inspectable alternative for people looking for an open-source OpenAI Dots alternative, with local data and explicit approval for higher-risk actions.
