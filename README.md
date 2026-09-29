@@ -5,7 +5,8 @@
   <video src="https://github.com/Anil-matcha/open-dots/raw/main/assets/open-dots-demo.mp4" poster="assets/open-dots-demo-poster.png" controls muted width="800"></video>
 </p>
 
-<p align="center"><a href="assets/open-dots-demo.mp4">▶ Watch the 45-second demo</a></p>
+<p align="center"><a href="https://youtu.be/b4ZTfs0KwR0"><img src="https://i.ytimg.com/vi/b4ZTfs0KwR0/maxresdefault.jpg" width="720"></a></p>
+<p align="center"><a href="https://youtu.be/b4ZTfs0KwR0"><b>▶ Watch: OpenAI Dots Alternative: Free, Open Source & Any Model </b></a></p>
 
 **Open Dots is an open-source alternative to OpenAI Dots:** a self-hosted AI workspace for chat, tool use, approvals, connectors, and computer tasks. It brings model conversations, a governed action gateway, approval prompts, and an optional isolated browser runtime into one local-first app.
 
