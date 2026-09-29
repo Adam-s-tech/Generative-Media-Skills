@@ -21,6 +21,7 @@ Open Dots is independently built and is not affiliated with or endorsed by OpenA
 - Connect to models through the included inference adapter and choose from its configured model catalog.
 - Request confined workspace reads and writes or computer actions through a deny-by-default gateway. Higher-risk actions pause for approval and produce audit events.
 - Connect apps through Composio, with explicit OAuth and narrow GitHub issue lookup/create actions.
+- Search the web from chat with `/search <query>`. It runs through the governed action gateway like the other tools, works with the keyless You.com free profile, and produces audit events.
 - Run an optional bot-scoped Docker/Playwright computer runtime or connect a compatible remote computer service.
 - Keep application state in SQLite and encrypt provider credentials at rest.
 
@@ -71,6 +72,7 @@ The bundled inference adapter sends a prediction request to `{MODEL_API_BASE_URL
 | `MODEL_API_BASE_URL` | empty | Required base URL for the configured inference API |
 | `DEFAULT_MODEL` | `gpt-5-mini` | Initial model for new assistants |
 | `COMPOSIO_API_KEY` | empty | Optional connector credential |
+| `YDC_API_KEY` | empty | Optional You.com API key for `/search`; the keyless free profile is used when unset |
 | `DATA_DIR` | `~/.open-dots` | SQLite state and local keys |
 | `APP_ENCRYPTION_KEY` | generated in `DATA_DIR` | Optional Fernet key for encrypted credentials |
 | `APP_AUTH_TOKEN` | generated in `DATA_DIR` | Bearer token for direct or non-loopback API access |
@@ -79,6 +81,14 @@ The bundled inference adapter sends a prediction request to `{MODEL_API_BASE_URL
 | `HOST` / `PORT` | `127.0.0.1` / `8000` | API bind address |
 
 For non-loopback access, set `APP_AUTH_TOKEN`, configure the client with `NEXT_PUBLIC_API_TOKEN`, use HTTPS, and set a narrow `CORS_ORIGINS` list. Do not expose generated tokens in logs or source control.
+
+## Web search
+
+`/search <query>` in chat runs a governed, read-only web lookup through the [You.com MCP server](https://you.com/docs/build-with-agents/mcp-server) and hands the results to the assistant as action context, so it can answer with current information.
+
+- No key is required: without `YDC_API_KEY` the keyless free profile is used, which serves a reduced read-only tool set.
+- Set `YDC_API_KEY` to use the authenticated endpoint with higher limits.
+- The lookup registers as `search.web` (risk `external`). Like `connector.github_list_issues`, it is an explicit, read-only command typed by the user, so it does not pause for approval; every run still produces the standard gateway audit events.
 
 ## Optional computer runtime
 
