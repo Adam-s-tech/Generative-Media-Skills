@@ -201,15 +201,14 @@ async def stream_turn(thread_id: str, model: Optional[str] = Query("gpt-5-mini")
                         }),
                     }
 
-        if tool_context:
-            system_prompt = f"{system_prompt}\n\n{tool_context}"
+        provider_prompt = f"{system_prompt}\n\n{tool_context}" if tool_context else system_prompt
 
         # Stream content from inference adapter
         try:
             async for event in provider_service.stream_chat_completion(
                 model=selected_model,
                 messages=formatted_history,
-                system_prompt=system_prompt
+                system_prompt=provider_prompt
             ):
                 if event["type"] == "content.delta":
                     accumulated_text += event["delta"]
@@ -235,7 +234,7 @@ async def stream_turn(thread_id: str, model: Optional[str] = Query("gpt-5-mini")
                     storage_service.add_message(bot_msg)
                     yield {
                         "event": "message",
-                        "data": json.dumps({"type": "turn.completed", "ok": True, "botMsgId": bot_msg_id})
+                        "data": json.dumps({"type": "turn.completed", "ok": event.get("ok", False), "botMsgId": bot_msg_id})
                     }
         except asyncio.CancelledError:
             raise

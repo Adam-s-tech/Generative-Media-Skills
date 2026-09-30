@@ -239,6 +239,7 @@ export default function ChatWindow({ bot, models, messages, setMessages, onUpdat
         {/* Right Side: Model Picker & Computer Monitor Toggle */}
         <div className="flex items-center gap-3">
           <ModelPicker
+            models={models}
             currentModel={activeModel}
             models={models}
             onSelectModel={handleModelChange}
