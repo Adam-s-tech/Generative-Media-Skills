@@ -15,6 +15,7 @@ from app.services.action_gateway import (
     action_gateway,
 )
 from app.services.connector_actions import ConnectorCommandError, parse_connector_command
+from app.services.search_actions import SearchCommandError, parse_search_command
 from app.services.workspace_service import (
     WorkspaceToolError,
     parse_workspace_command,
@@ -84,9 +85,17 @@ async def stream_turn(thread_id: str, model: Optional[str] = Query("gpt-5-mini")
             action_call = parse_workspace_command(last_user_text)
             if action_call is None:
                 action_call = parse_connector_command(last_user_text)
-        except (WorkspaceToolError, ConnectorCommandError) as exc:
+            if action_call is None:
+                action_call = parse_search_command(last_user_text)
+        except (WorkspaceToolError, ConnectorCommandError, SearchCommandError) as exc:
             action_call = None
-            command_tool = "connector" if last_user_text.lower().startswith("/connector") else "workspace"
+            lowered_text = last_user_text.lower()
+            if lowered_text.startswith("/connector"):
+                command_tool = "connector"
+            elif lowered_text.startswith("/search"):
+                command_tool = "search"
+            else:
+                command_tool = "workspace"
             tool_context = f"A {command_tool} request was rejected before execution: {exc}"
             yield {
                 "event": "message",
