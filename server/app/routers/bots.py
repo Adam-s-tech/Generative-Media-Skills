@@ -22,7 +22,7 @@ async def create_bot(bot_data: Dict[str, Any]):
         raise HTTPException(status_code=422, detail=f"Unsupported bot fields: {', '.join(sorted(unknown))}")
     if "id" in bot_data:
         raise HTTPException(status_code=422, detail="Bot ids are assigned by the server.")
-    new_id = f"bot-{uuid.uuid4().hex[:6]}"
+    new_id = f"bot-{uuid.uuid4().hex}"
     bot = {
         "id": new_id,
         "name": bot_data.get("name", "New Bot"),
