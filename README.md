@@ -63,7 +63,15 @@ Open `http://localhost:3000`. You can enter the provider key in App Settings ins
 
 ## Model provider
 
-The bundled inference adapter sends a prediction request to `{MODEL_API_BASE_URL}/{model_id}` and uploads images to `{MODEL_API_BASE_URL}/upload_file`. Configure it with a service that implements this request and response contract and supports the model IDs you select. This adapter does not implement the generic OpenAI-compatible chat completions interface.
+The default inference adapter sends a prediction request to `{MODEL_API_BASE_URL}/{model_id}` and uploads images to `{MODEL_API_BASE_URL}/upload_file`. Configure it with a service that implements this request and response contract and supports the model IDs you select.
+
+Open **Settings → Model provider** and expand the collapsed panel to enter the API base URL, choose Responses or Prediction, save an API key, and configure model IDs and the default model. Use the API root (usually ending in `/v1`), without appending `/responses`. Model IDs accept one per line or comma-separated values. Saving refreshes the model menus and sets the default for newly created assistants; existing assistants keep their selected model.
+
+For an OpenAI Responses-compatible service, choose **Responses API**. Requests stream from `/responses` with Bearer authentication, preserve conversation roles, and send attached images as data URLs. The Chat Completions protocol is not implemented. Under **Custom headers**, keep stored headers, replace the complete set, or explicitly remove them. Keys and header values are encrypted locally and are not displayed after saving; a blank API key preserves its stored value.
+
+The same settings are available through the authenticated settings API (`POST /api/v1/settings`): `model_api_wire_api`, `model_api_base_url`, `model_api_key`, and `model_api_headers`. Use `clear_model_api_headers: true` to remove stored headers explicitly.
+
+Set `model_ids` to the service's supported chat model IDs and `default_model` to one of those exact IDs. Both model menus use the configured catalog; the application does not rewrite model IDs. Omitted settings retain their previous values, and empty credential/header values retain stored secrets.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
@@ -112,7 +120,7 @@ The main code areas are `client/` (Next.js UI), `server/app/routers/` (HTTP API)
 
 - One local owner; user provisioning, roles, and multi-user grants are not implemented.
 - SQLite is local state; coordinated multi-instance storage and backup workflows are not included.
-- The bundled inference adapter expects a specific prediction API contract; a generic provider plugin interface is not implemented.
+- Inference supports the original prediction API and Responses-compatible services; Chat Completions and a generic provider plugin interface are not implemented.
 - The computer runtime is opt-in and is not a hardened security boundary for arbitrary web content.
 - Connector actions are intentionally narrow; arbitrary tool discovery and writes are not implemented.
 - There is no mobile or desktop client, durable memory service, or scheduled routine engine.

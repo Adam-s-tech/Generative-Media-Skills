@@ -21,7 +21,7 @@ async def create_bot(bot_data: Dict[str, Any]):
         "role": bot_data.get("role", "AI Assistant"),
         "description": bot_data.get("description", "Custom AI agent persona"),
         "avatar": bot_data.get("avatar", "🤖"),
-        "model": bot_data.get("model", "gpt-5-mini"),
+        "model": bot_data.get("model", storage_service.get_settings()["default_model"]),
         "accent_color": bot_data.get("accent_color", "#3b82f6"),
         "system_prompt": bot_data.get("system_prompt", "You are a helpful AI assistant."),
         "tools": bot_data.get("tools", []),
