@@ -269,6 +269,14 @@ class StorageService:
                     (str(bot["id"]), self.owner_id, json.dumps(bot)),
                 )
 
+    def delete_bot(self, bot_id: str) -> None:
+        """Delete one bot without rewriting a stale snapshot of other bots."""
+        with self.database.connect() as connection:
+            connection.execute(
+                "DELETE FROM bots WHERE owner_id = ? AND id = ?",
+                (self.owner_id, bot_id),
+            )
+
     def get_messages(self, thread_id: Optional[str] = None) -> List[Dict[str, Any]]:
         with self.database.connect() as connection:
             if thread_id:
