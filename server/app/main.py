@@ -5,6 +5,8 @@ from fastapi.responses import JSONResponse
 from app.config import settings
 from app.routers import auth, bots, models, chat, approvals, upload, settings as settings_router, connectors, audit, computers
 from app.services.auth_service import auth_service
+from app.services.computer_provider import computer_provider
+from app.services.storage_service import storage_service
 
 app = FastAPI(
     title="Open Dots API",
@@ -42,10 +44,20 @@ async def require_authentication(request: Request, call_next):
 
     user = auth_service.authenticate_request(request)
     if not user:
+        origin = request.headers.get("origin", "")
+        cors_headers = {}
+        if origin in settings.CORS_ORIGINS:
+            cors_headers = {
+                "Access-Control-Allow-Origin": origin,
+                "Access-Control-Allow-Credentials": "true",
+                "Access-Control-Allow-Headers": request.headers.get("access-control-request-headers", "*"),
+                "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+                "Vary": "Origin",
+            }
         return JSONResponse(
             {"detail": "Authentication is required."},
             status_code=401,
-            headers={"WWW-Authenticate": "Bearer"},
+            headers={"WWW-Authenticate": "Bearer", **cors_headers},
         )
     request.state.user = user
     return await call_next(request)
@@ -68,6 +80,6 @@ async def health_check():
         "status": "online",
         "service": "Open Dots FastAPI Backend",
         "provider": "configured inference endpoint",
-        "computer_provider": settings.COMPUTER_PROVIDER,
-        "default_model": "gpt-5-mini"
+        "computer_provider": computer_provider.provider_name,
+        "default_model": storage_service.get_settings().get("default_model") or settings.DEFAULT_MODEL
     }

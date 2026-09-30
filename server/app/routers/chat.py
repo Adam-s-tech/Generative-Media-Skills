@@ -15,6 +15,7 @@ from app.services.action_gateway import (
     action_gateway,
 )
 from app.services.connector_actions import ConnectorCommandError, parse_connector_command
+from app.services.search_actions import SearchCommandError, parse_search_command
 from app.services.workspace_service import (
     WorkspaceToolError,
     parse_workspace_command,
@@ -37,7 +38,10 @@ async def send_message(req: TurnRequest):
         "text": req.user_text,
         "image_url": req.image_url,
         "created_at": datetime.now().isoformat(),
-        "model": req.model or "gpt-5-mini",
+        "model": req.model or next(
+            (bot.get("model") for bot in storage_service.get_bots() if bot.get("id") == req.bot_id),
+            storage_service.get_settings().get("default_model", "gpt-5-mini"),
+        ),
         "item_type": "user_text"
     }
 
@@ -45,7 +49,7 @@ async def send_message(req: TurnRequest):
     return {"status": "ok", "message": user_msg}
 
 @router.get("/stream/{thread_id}")
-async def stream_turn(thread_id: str, model: Optional[str] = Query("gpt-5-mini")):
+async def stream_turn(thread_id: str, model: Optional[str] = Query(None)):
     """
     SSE stream endpoint broadcasting real-time tokens & tool events for a given thread.
     """
@@ -84,9 +88,17 @@ async def stream_turn(thread_id: str, model: Optional[str] = Query("gpt-5-mini")
             action_call = parse_workspace_command(last_user_text)
             if action_call is None:
                 action_call = parse_connector_command(last_user_text)
-        except (WorkspaceToolError, ConnectorCommandError) as exc:
+            if action_call is None:
+                action_call = parse_search_command(last_user_text)
+        except (WorkspaceToolError, ConnectorCommandError, SearchCommandError) as exc:
             action_call = None
-            command_tool = "connector" if last_user_text.lower().startswith("/connector") else "workspace"
+            lowered_text = last_user_text.lower()
+            if lowered_text.startswith("/connector"):
+                command_tool = "connector"
+            elif lowered_text.startswith("/search"):
+                command_tool = "search"
+            else:
+                command_tool = "workspace"
             tool_context = f"A {command_tool} request was rejected before execution: {exc}"
             yield {
                 "event": "message",
@@ -201,15 +213,14 @@ async def stream_turn(thread_id: str, model: Optional[str] = Query("gpt-5-mini")
                         }),
                     }
 
-        if tool_context:
-            system_prompt = f"{system_prompt}\n\n{tool_context}"
+        provider_prompt = f"{system_prompt}\n\n{tool_context}" if tool_context else system_prompt
 
         # Stream content from inference adapter
         try:
             async for event in provider_service.stream_chat_completion(
                 model=selected_model,
                 messages=formatted_history,
-                system_prompt=system_prompt
+                system_prompt=provider_prompt
             ):
                 if event["type"] == "content.delta":
                     accumulated_text += event["delta"]
@@ -222,20 +233,22 @@ async def stream_turn(thread_id: str, model: Optional[str] = Query("gpt-5-mini")
                         })
                     }
                 elif event["type"] == "turn.completed":
-                    bot_msg = {
-                        "id": bot_msg_id,
-                        "thread_id": thread_id,
-                        "bot_id": thread_id,
-                        "sender": "bot",
-                        "text": accumulated_text,
-                        "created_at": datetime.now().isoformat(),
-                        "model": selected_model,
-                        "item_type": "assistant_text"
-                    }
-                    storage_service.add_message(bot_msg)
+                    ok = event.get("ok", True)
+                    if ok:
+                        bot_msg = {
+                            "id": bot_msg_id,
+                            "thread_id": thread_id,
+                            "bot_id": thread_id,
+                            "sender": "bot",
+                            "text": accumulated_text,
+                            "created_at": datetime.now().isoformat(),
+                            "model": selected_model,
+                            "item_type": "assistant_text"
+                        }
+                        storage_service.add_message(bot_msg)
                     yield {
                         "event": "message",
-                        "data": json.dumps({"type": "turn.completed", "ok": True, "botMsgId": bot_msg_id})
+                        "data": json.dumps({"type": "turn.completed", "ok": ok, "botMsgId": bot_msg_id})
                     }
         except asyncio.CancelledError:
             raise

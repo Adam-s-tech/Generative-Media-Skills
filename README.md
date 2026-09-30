@@ -21,6 +21,7 @@ Open Dots is independently built and is not affiliated with or endorsed by OpenA
 - Connect to models through the included inference adapter and choose from its configured model catalog.
 - Request confined workspace reads and writes or computer actions through a deny-by-default gateway. Higher-risk actions pause for approval and produce audit events.
 - Connect apps through Composio, with explicit OAuth and narrow GitHub issue lookup/create actions.
+- Search the web from chat with `/search <query>`. It runs through the governed action gateway like the other tools, works with the keyless You.com free profile, and produces audit events.
 - Run an optional bot-scoped Docker/Playwright computer runtime or connect a compatible remote computer service.
 - Keep application state in SQLite and encrypt provider credentials at rest.
 
@@ -59,11 +60,19 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`. You can enter the provider key in App Settings instead of setting the environment variable. The server creates local session and encryption keys under its data directory on first start.
+Open `http://127.0.0.1:3000`. You can enter the provider key in App Settings instead of setting the environment variable. The server creates local session and encryption keys under its data directory on first start.
 
 ## Model provider
 
-The bundled inference adapter sends a prediction request to `{MODEL_API_BASE_URL}/{model_id}` and uploads images to `{MODEL_API_BASE_URL}/upload_file`. Configure it with a service that implements this request and response contract and supports the model IDs you select. This adapter does not implement the generic OpenAI-compatible chat completions interface.
+The default inference adapter sends a prediction request to `{MODEL_API_BASE_URL}/{model_id}` and uploads images to `{MODEL_API_BASE_URL}/upload_file`. Configure it with a service that implements this request and response contract and supports the model IDs you select.
+
+Open **Settings → Model provider** and expand the collapsed panel to enter the API base URL, choose Responses or Prediction, save an API key, and configure model IDs and the default model. Use the API root (usually ending in `/v1`), without appending `/responses`. Model IDs accept one per line or comma-separated values. Saving refreshes the model menus and sets the default for newly created assistants; existing assistants keep their selected model.
+
+For an OpenAI Responses-compatible service, choose **Responses API**. Requests stream from `/responses` with Bearer authentication, preserve conversation roles, and send attached images as data URLs. The Chat Completions protocol is not implemented. Under **Custom headers**, keep stored headers, replace the complete set, or explicitly remove them. Keys and header values are encrypted locally and are not displayed after saving; a blank API key preserves its stored value.
+
+The same settings are available through the authenticated settings API (`POST /api/v1/settings`): `model_api_wire_api`, `model_api_base_url`, `model_api_key`, and `model_api_headers`. Use `clear_model_api_headers: true` to remove stored headers explicitly.
+
+Set `model_ids` to the service's supported chat model IDs and `default_model` to one of those exact IDs. Both model menus use the configured catalog; the application does not rewrite model IDs. Omitted settings retain their previous values, and empty credential/header values retain stored secrets.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
@@ -71,6 +80,7 @@ The bundled inference adapter sends a prediction request to `{MODEL_API_BASE_URL
 | `MODEL_API_BASE_URL` | empty | Required base URL for the configured inference API |
 | `DEFAULT_MODEL` | `gpt-5-mini` | Initial model for new assistants |
 | `COMPOSIO_API_KEY` | empty | Optional connector credential |
+| `YDC_API_KEY` | empty | Optional You.com API key for `/search`; the keyless free profile is used when unset |
 | `DATA_DIR` | `~/.open-dots` | SQLite state and local keys |
 | `APP_ENCRYPTION_KEY` | generated in `DATA_DIR` | Optional Fernet key for encrypted credentials |
 | `APP_AUTH_TOKEN` | generated in `DATA_DIR` | Bearer token for direct or non-loopback API access |
@@ -78,7 +88,15 @@ The bundled inference adapter sends a prediction request to `{MODEL_API_BASE_URL
 | `COMPUTER_PROVIDER` | `fake` | Computer provider: `fake`, `docker`, or `remote` |
 | `HOST` / `PORT` | `127.0.0.1` / `8000` | API bind address |
 
-For non-loopback access, set `APP_AUTH_TOKEN`, configure the client with `NEXT_PUBLIC_API_TOKEN`, use HTTPS, and set a narrow `CORS_ORIGINS` list. Do not expose generated tokens in logs or source control.
+The first API start creates an owner token at `~/.open-dots/.auth-token` (or under `DATA_DIR`). The web client prompts for that token and exchanges it for a separate HttpOnly session cookie. For non-loopback access, set `APP_AUTH_TOKEN` on the server, use HTTPS, and set a narrow `CORS_ORIGINS` list. Never set the owner token in a `NEXT_PUBLIC_*` variable because Next.js embeds those values in public JavaScript.
+
+## Web search
+
+`/search <query>` in chat runs a governed, read-only web lookup through the [You.com MCP server](https://you.com/docs/build-with-agents/mcp-server) and hands the results to the assistant as action context, so it can answer with current information.
+
+- No key is required: without `YDC_API_KEY` the keyless free profile is used, which serves a reduced read-only tool set.
+- Set `YDC_API_KEY` to use the authenticated endpoint with higher limits.
+- The lookup registers as `search.web` (risk `external`). Like `connector.github_list_issues`, it is an explicit, read-only command typed by the user, so it does not pause for approval; every run still produces the standard gateway audit events.
 
 ## Optional computer runtime
 
@@ -112,7 +130,7 @@ The main code areas are `client/` (Next.js UI), `server/app/routers/` (HTTP API)
 
 - One local owner; user provisioning, roles, and multi-user grants are not implemented.
 - SQLite is local state; coordinated multi-instance storage and backup workflows are not included.
-- The bundled inference adapter expects a specific prediction API contract; a generic provider plugin interface is not implemented.
+- Inference supports the original prediction API and Responses-compatible services; Chat Completions and a generic provider plugin interface are not implemented.
 - The computer runtime is opt-in and is not a hardened security boundary for arbitrary web content.
 - Connector actions are intentionally narrow; arbitrary tool discovery and writes are not implemented.
 - There is no mobile or desktop client, durable memory service, or scheduled routine engine.

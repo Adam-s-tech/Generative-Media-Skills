@@ -66,10 +66,6 @@ export default function Dashboard() {
     try {
       const updated = await updateBot(botId, { model: newModel });
       setBots((prev) => prev.map((b) => (b.id === botId ? updated : b)));
-      // Keep defaultModel in sync whenever the active bot's model changes
-      if (botId === activeBotId) {
-        setDefaultModel(newModel);
-      }
     } catch (err) {
       console.error('Failed to update bot model:', err);
     }
@@ -79,14 +75,14 @@ export default function Dashboard() {
     const name = prompt('Enter Bot Name:', 'New Assistant');
     if (!name) return;
     const role = prompt('Enter Role:', 'General Intelligence');
-    const model = prompt('Enter Model (e.g. gpt-5-mini, claude-3-5-sonnet):', 'gpt-5-mini');
+    const model = prompt('Enter Model:', defaultModel);
 
     try {
       const newBot = await createBot({
         name,
         role: role || 'AI Assistant',
-        model: model || 'gpt-5-mini',
-        description: `Custom assistant configured to use ${model || 'gpt-5-mini'}.`,
+        model: model || defaultModel,
+        description: `Custom assistant configured to use ${model || defaultModel}.`,
         avatar: '🤖',
         system_prompt: `You are ${name}, a helpful AI assistant.`
       });
@@ -142,14 +138,13 @@ export default function Dashboard() {
 
       {/* Right Side App Settings Drawer Panel */}
       <AppSettingsDrawer
+        models={models}
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         currentModel={defaultModel}
-        onUpdateDefaultModel={(newModel) => {
+        onUpdateDefaultModel={async (newModel) => {
           setDefaultModel(newModel);
-          if (activeBotId) {
-            handleUpdateBotModel(activeBotId, newModel);
-          }
+          setModels(await fetchModels());
         }}
         onProfileUpdate={(name) => setUserName(name || 'You')}
       />

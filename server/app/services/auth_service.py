@@ -1,8 +1,8 @@
 """Authentication primitives for the single-owner local deployment."""
 
-import ipaddress
 import os
 import secrets
+import time
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -17,12 +17,11 @@ SESSION_COOKIE = "open_dots_session"
 
 
 class AuthService:
-    """Validate a configured bearer token or a mode-0600 local token file.
+    """Validate the owner token and issue separate, short-lived browser sessions.
 
-    When no environment token is supplied, a local token is generated once and
-    loopback requests may exchange it for an HttpOnly session cookie. A
-    deployment exposed beyond the local machine should set APP_AUTH_TOKEN and
-    provide that token through a secure deployment or client integration.
+    With no environment token, the owner token is generated in a mode-0600 file.
+    A client must present that token to log in; source address alone never grants
+    an owner session because container and proxy traffic can appear as loopback.
     """
 
     def __init__(self, data_dir: Optional[Path] = None):
@@ -31,6 +30,7 @@ class AuthService:
         self.token_path = self.data_dir / ".auth-token"
         self.configured_token = os.getenv("APP_AUTH_TOKEN", "").strip()
         self.token = self.configured_token or self._load_or_create_token()
+        self._sessions: Dict[str, float] = {}
 
     @property
     def user(self) -> Dict[str, str]:
@@ -57,34 +57,38 @@ class AuthService:
         if scheme.lower() == "bearer" and self.authenticate_token(bearer.strip()):
             return self.user
 
-        if self.authenticate_token(request.cookies.get(SESSION_COOKIE)):
+        session = request.cookies.get(SESSION_COOKIE, "")
+        expires = self._sessions.get(session, 0)
+        if expires > time.time():
             return self.user
+        self._sessions.pop(session, None)
         return None
 
     def can_bootstrap(self, request: Request) -> bool:
-        if self.configured_token:
-            return False
-        host = request.client.host if request.client else ""
-        if host in {"localhost", "localhost.localdomain"}:
-            return True
-        try:
-            return ipaddress.ip_address(host).is_loopback
-        except ValueError:
-            return False
+        # A loopback peer is not proof of an owner: Docker containers and
+        # same-host proxies may also appear as loopback to the API.
+        return False
 
-    def set_session_cookie(self, response: Response) -> None:
+    def set_session_cookie(self, response: Response, *, secure: Optional[bool] = None) -> None:
+        session = secrets.token_urlsafe(32)
+        self._sessions[session] = time.time() + settings.AUTH_SESSION_MAX_AGE
         response.set_cookie(
             SESSION_COOKIE,
-            self.token,
+            session,
             max_age=settings.AUTH_SESSION_MAX_AGE,
             httponly=True,
-            secure=settings.AUTH_COOKIE_SECURE,
+            secure=settings.AUTH_COOKIE_SECURE if secure is None else secure,
             samesite="lax",
         )
 
     @staticmethod
     def clear_session_cookie(response: Response) -> None:
         response.delete_cookie(SESSION_COOKIE, httponly=True, samesite="lax")
+
+    def clear_request_session(self, request: Request, response: Response) -> None:
+        session = request.cookies.get(SESSION_COOKIE, "")
+        self._sessions.pop(session, None)
+        self.clear_session_cookie(response)
 
 
 auth_service = AuthService()
