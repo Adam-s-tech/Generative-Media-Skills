@@ -1,4 +1,4 @@
-# Open Dots: Open-Source Alternative to OpenAI Dots
+# Open Dots: Open-Source Personal AI Agent Workspace
 
 
 <p align="center">
@@ -8,7 +8,7 @@
 <p align="center"><a href="https://youtu.be/b4ZTfs0KwR0"><img src="https://i.ytimg.com/vi/b4ZTfs0KwR0/maxresdefault.jpg" width="720"></a></p>
 <p align="center"><a href="https://youtu.be/b4ZTfs0KwR0"><b>▶ Watch: OpenAI Dots Alternative: Free, Open Source & Any Model </b></a></p>
 
-**Open Dots is an open-source alternative to OpenAI Dots:** a self-hosted AI workspace for chat, tool use, approvals, connectors, and computer tasks. It brings model conversations, a governed action gateway, approval prompts, and an optional isolated browser runtime into one local-first app.
+**Open Dots is an open-source, self-hosted personal AI agent workspace** for chat, tool use, approvals, connectors, and computer tasks. It brings model conversations, a governed action gateway, approval prompts, and an optional browser runtime into one local-first app. It can be evaluated by people searching for open-source alternatives to OpenAI Dots, Meta Muse, Grok Bot, Instinct, Manus Cue, Claude Cowork, or ChatGPT agent; it is an early prototype, not a feature-equivalent replacement for those products.
 
 Open Dots is independently built and is not affiliated with or endorsed by OpenAI, xAI, or any model provider. It offers a self-hostable, inspectable alternative for people looking for an open-source OpenAI Dots alternative, with local data and explicit approval for higher-risk actions.
 
@@ -27,7 +27,7 @@ Open Dots is independently built and is not affiliated with or endorsed by OpenA
 
 ## Why Open Dots
 
-Open Dots gives developers and individuals a self-hosted AI workspace they can inspect and adapt. Use it as an open-source alternative to OpenAI Dots when you want local-first conversation storage, configurable model access, visible approval steps, and an optional computer runtime under your control. It is a separate project with its own implementation and current limitations; see the provider and runtime notes below before deploying it.
+Open Dots gives developers and individuals a self-hosted AI workspace they can inspect and adapt. It is an open-source alternative for people who want local-first conversation storage, configurable model access, visible approval steps, and an optional computer runtime under their control. It is a separate project with its own implementation and limitations; see the provider and runtime notes below before deploying it.
 
 ## Quick start
 
