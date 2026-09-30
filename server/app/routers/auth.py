@@ -40,23 +40,21 @@ async def auth_status(request: Request):
 @router.get("/session")
 async def establish_session(request: Request, response: Response):
     user = auth_service.authenticate_request(request)
-    if not user and auth_service.can_bootstrap(request):
-        user = auth_service.user
     if not user:
         raise _authentication_error()
-    auth_service.set_session_cookie(response)
+    auth_service.set_session_cookie(response, secure=request.url.scheme == "https")
     return _session_payload()
 
 
 @router.post("/login")
-async def login(credentials: LoginRequest, response: Response):
+async def login(credentials: LoginRequest, request: Request, response: Response):
     if not auth_service.authenticate_token(credentials.token):
         raise _authentication_error()
-    auth_service.set_session_cookie(response)
+    auth_service.set_session_cookie(response, secure=request.url.scheme == "https")
     return _session_payload()
 
 
 @router.post("/logout")
-async def logout(response: Response):
-    auth_service.clear_session_cookie(response)
+async def logout(request: Request, response: Response):
+    auth_service.clear_request_session(request, response)
     return {"authenticated": False}

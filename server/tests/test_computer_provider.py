@@ -12,9 +12,11 @@ from app.services.workspace_service import WorkspaceService
 
 try:
     from app.main import app
+    from app.services.auth_service import auth_service
     from app.services.storage_service import storage_service
 except ModuleNotFoundError:
     app = None
+    auth_service = None
     storage_service = None
 
 
@@ -167,7 +169,7 @@ class ComputerRouterTests(unittest.IsolatedAsyncioTestCase):
         bot_id = storage_service.get_bots()[0]["id"]
         transport = httpx.ASGITransport(app=app, client=("127.0.0.1", 43124))
         async with httpx.AsyncClient(transport=transport, base_url="http://127.0.0.1") as client:
-            session = await client.get("/api/v1/auth/session")
+            session = await client.post("/api/v1/auth/login", json={"token": auth_service.token})
             self.assertEqual(session.status_code, 200)
 
             initial = await client.get(f"/api/v1/computers/{bot_id}")

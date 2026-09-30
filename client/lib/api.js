@@ -1,14 +1,8 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/v1';
-const API_TOKEN = process.env.NEXT_PUBLIC_API_TOKEN || '';
-
 let sessionPromise = null;
 
 function withAuthHeaders(headers = {}) {
-  const merged = new Headers(headers);
-  if (API_TOKEN && !merged.has('Authorization')) {
-    merged.set('Authorization', `Bearer ${API_TOKEN}`);
-  }
-  return merged;
+  return new Headers(headers);
 }
 
 async function ensureSession() {
@@ -16,10 +10,21 @@ async function ensureSession() {
   if (!sessionPromise) {
     sessionPromise = fetch(`${API_BASE_URL}/auth/session`, {
       credentials: 'include',
-      headers: withAuthHeaders(),
     })
       .then((res) => {
-        if (!res.ok) throw new Error('Authentication required');
+        if (!res.ok) {
+          const token = window.prompt('Sign in with the owner token from DATA_DIR/.auth-token (or your APP_AUTH_TOKEN):');
+          if (!token) throw new Error('Authentication required');
+          return fetch(`${API_BASE_URL}/auth/login`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token }),
+          }).then((loginResponse) => {
+            if (!loginResponse.ok) throw new Error('Invalid API token');
+            return loginResponse.json();
+          });
+        }
         return res.json();
       })
       .catch((err) => {

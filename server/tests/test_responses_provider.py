@@ -12,6 +12,7 @@ from app.schemas.contracts import AppSettingsSchema
 from app.routers import settings as settings_router
 from app.routers import chat as chat_router
 from app.main import app
+from app.services.auth_service import auth_service
 
 
 class ResponsesProviderTests(unittest.IsolatedAsyncioTestCase):
@@ -135,12 +136,16 @@ class ChatStreamTests(unittest.IsolatedAsyncioTestCase):
                 with patch.object(chat_router, "storage_service", storage), \
                      patch.object(chat_router.provider_service, "stream_chat_completion", fake_stream):
                     async with httpx.AsyncClient(transport=transport, base_url="http://127.0.0.1") as client:
-                        await client.get("/api/v1/auth/session")
-                        response = await client.get("/api/v1/chat/stream/chat-test?model=exact.model-id")
+                        await client.post("/api/v1/auth/login", json={"token": auth_service.token})
+                        response = await client.get("/api/v1/chat/stream/chat-test")
                 events = [json.loads(line[5:]) for line in response.text.splitlines() if line.startswith("data:")]
                 self.assertEqual(response.status_code, 200)
                 self.assertIn("Test persona", captured["system_prompt"])
                 self.assertEqual(captured["messages"], [{"role": "user", "content": "Hello", "image_url": None}])
                 self.assertEqual(events[-1]["type"], "turn.completed")
                 self.assertEqual(events[-1]["ok"], ok)
-                storage.add_message.assert_called_once()
+                self.assertEqual(events[0]["model"], "exact.model-id")
+                if ok:
+                    storage.add_message.assert_called_once()
+                else:
+                    storage.add_message.assert_not_called()

@@ -8,6 +8,7 @@ import httpx
 from app.main import app
 from app.routers import settings as settings_router
 from app.services.storage_service import StorageService
+from app.services.auth_service import auth_service
 
 
 class ProviderSettingsApiTests(unittest.IsolatedAsyncioTestCase):
@@ -20,7 +21,7 @@ class ProviderSettingsApiTests(unittest.IsolatedAsyncioTestCase):
             transport=httpx.ASGITransport(app=app, client=("127.0.0.1", 12345)),
             base_url="http://127.0.0.1",
         )
-        await self.client.get("/api/v1/auth/session")
+        await self.client.post("/api/v1/auth/login", json={"token": auth_service.token})
 
     async def asyncTearDown(self):
         await self.client.aclose()
@@ -60,6 +61,19 @@ class ProviderSettingsApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.storage.get_settings()["model_api_key"], "test-key")
         await self.client.post("/api/v1/settings", json={"model_api_headers": {"x-new": "new-value"}})
         self.assertEqual(self.storage.get_settings()["model_api_headers"], {"x-new": "new-value"})
+
+    async def test_partial_settings_update_preserves_omitted_values(self):
+        self.storage.save_settings({
+            "model_api_base_url": "https://saved.example/v1",
+            "default_model": "saved-model",
+            "theme": "dark",
+        })
+        response = await self.client.post("/api/v1/settings", json={"theme": "light"})
+        self.assertEqual(response.status_code, 200)
+        saved = self.storage.get_settings()
+        self.assertEqual(saved["theme"], "light")
+        self.assertEqual(saved["model_api_base_url"], "https://saved.example/v1")
+        self.assertEqual(saved["default_model"], "saved-model")
 
     async def test_invalid_form_data_is_rejected_before_persistence(self):
         initial = self.storage.get_settings()

@@ -241,7 +241,6 @@ export default function ChatWindow({ bot, models, messages, setMessages, onUpdat
           <ModelPicker
             models={models}
             currentModel={activeModel}
-            models={models}
             onSelectModel={handleModelChange}
           />
 
@@ -378,13 +377,19 @@ export default function ChatWindow({ bot, models, messages, setMessages, onUpdat
           </button>
 
           {/* Textarea Input */}
-          <input
+          <textarea
             suppressHydrationWarning={true}
-            type="text"
             value={inputPrompt}
             onChange={(e) => setInputPrompt(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                e.currentTarget.form?.requestSubmit();
+              }
+            }}
+            rows={1}
             placeholder={`Message ${botTitle}`}
-            className="w-full bg-transparent text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none"
+            className="w-full resize-y bg-transparent text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none max-h-40"
           />
 
           {/* Microphone Dictation Button */}

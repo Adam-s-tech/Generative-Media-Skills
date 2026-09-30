@@ -12,7 +12,7 @@ class Bot(BaseModel):
     model: str = "gpt-5-mini"
     accent_color: str = "cyan"
     system_prompt: str
-    tools: List[str] = []
+    tools: List[str] = Field(default_factory=list)
     pinned: bool = False
     unread_count: int = 0
     created_at: str

@@ -38,7 +38,10 @@ async def send_message(req: TurnRequest):
         "text": req.user_text,
         "image_url": req.image_url,
         "created_at": datetime.now().isoformat(),
-        "model": req.model or "gpt-5-mini",
+        "model": req.model or next(
+            (bot.get("model") for bot in storage_service.get_bots() if bot.get("id") == req.bot_id),
+            storage_service.get_settings().get("default_model", "gpt-5-mini"),
+        ),
         "item_type": "user_text"
     }
 
@@ -46,7 +49,7 @@ async def send_message(req: TurnRequest):
     return {"status": "ok", "message": user_msg}
 
 @router.get("/stream/{thread_id}")
-async def stream_turn(thread_id: str, model: Optional[str] = Query("gpt-5-mini")):
+async def stream_turn(thread_id: str, model: Optional[str] = Query(None)):
     """
     SSE stream endpoint broadcasting real-time tokens & tool events for a given thread.
     """
@@ -230,20 +233,22 @@ async def stream_turn(thread_id: str, model: Optional[str] = Query("gpt-5-mini")
                         })
                     }
                 elif event["type"] == "turn.completed":
-                    bot_msg = {
-                        "id": bot_msg_id,
-                        "thread_id": thread_id,
-                        "bot_id": thread_id,
-                        "sender": "bot",
-                        "text": accumulated_text,
-                        "created_at": datetime.now().isoformat(),
-                        "model": selected_model,
-                        "item_type": "assistant_text"
-                    }
-                    storage_service.add_message(bot_msg)
+                    ok = event.get("ok", True)
+                    if ok:
+                        bot_msg = {
+                            "id": bot_msg_id,
+                            "thread_id": thread_id,
+                            "bot_id": thread_id,
+                            "sender": "bot",
+                            "text": accumulated_text,
+                            "created_at": datetime.now().isoformat(),
+                            "model": selected_model,
+                            "item_type": "assistant_text"
+                        }
+                        storage_service.add_message(bot_msg)
                     yield {
                         "event": "message",
-                        "data": json.dumps({"type": "turn.completed", "ok": event.get("ok", False), "botMsgId": bot_msg_id})
+                        "data": json.dumps({"type": "turn.completed", "ok": ok, "botMsgId": bot_msg_id})
                     }
         except asyncio.CancelledError:
             raise

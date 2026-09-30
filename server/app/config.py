@@ -38,10 +38,7 @@ class Settings:
     )
     COMPUTER_DOCKER_RUNTIME_PORT: int = int(os.getenv("COMPUTER_DOCKER_RUNTIME_PORT", "3000"))
     COMPUTER_DOCKER_SECCOMP_PROFILE: Path = Path(
-        os.getenv(
-            "COMPUTER_DOCKER_SECCOMP_PROFILE",
-            str(Path(__file__).resolve().parents[2] / "runtime" / "seccomp_profile.json"),
-        )
+        os.getenv("COMPUTER_DOCKER_SECCOMP_PROFILE", "/nonexistent/open-dots-seccomp.json")
     ).expanduser().resolve()
     COMPUTER_REMOTE_BASE_URL: str = os.getenv("COMPUTER_REMOTE_BASE_URL", "").rstrip("/")
     COMPUTER_REMOTE_API_KEY: str = os.getenv("COMPUTER_REMOTE_API_KEY", "").strip()

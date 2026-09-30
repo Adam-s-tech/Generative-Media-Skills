@@ -60,7 +60,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`. You can enter the provider key in App Settings instead of setting the environment variable. The server creates local session and encryption keys under its data directory on first start.
+Open `http://127.0.0.1:3000`. You can enter the provider key in App Settings instead of setting the environment variable. The server creates local session and encryption keys under its data directory on first start.
 
 ## Model provider
 
@@ -88,7 +88,7 @@ Set `model_ids` to the service's supported chat model IDs and `default_model` to
 | `COMPUTER_PROVIDER` | `fake` | Computer provider: `fake`, `docker`, or `remote` |
 | `HOST` / `PORT` | `127.0.0.1` / `8000` | API bind address |
 
-For non-loopback access, set `APP_AUTH_TOKEN`, configure the client with `NEXT_PUBLIC_API_TOKEN`, use HTTPS, and set a narrow `CORS_ORIGINS` list. Do not expose generated tokens in logs or source control.
+The first API start creates an owner token at `~/.open-dots/.auth-token` (or under `DATA_DIR`). The web client prompts for that token and exchanges it for a separate HttpOnly session cookie. For non-loopback access, set `APP_AUTH_TOKEN` on the server, use HTTPS, and set a narrow `CORS_ORIGINS` list. Never set the owner token in a `NEXT_PUBLIC_*` variable because Next.js embeds those values in public JavaScript.
 
 ## Web search
 
