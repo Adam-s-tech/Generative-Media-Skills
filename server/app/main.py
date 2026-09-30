@@ -14,15 +14,6 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configure CORS for Next.js frontend
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 PUBLIC_API_PATHS = {
     "/api/v1/health",
     "/api/v1/auth/status",
@@ -35,32 +26,42 @@ PUBLIC_API_PATHS = {
 @app.middleware("http")
 async def require_authentication(request: Request, call_next):
     path = request.url.path
+    if path.startswith("/api/v1") and request.method != "OPTIONS":
+        origin = request.headers.get("origin")
+        allowed_origins = {*settings.CORS_ORIGINS, str(request.base_url).rstrip("/")}
+        # CORS alone does not stop credentialed requests from changing state.
+        if (origin and origin not in allowed_origins) or (
+            not origin and request.headers.get("sec-fetch-site") in {"cross-site", "same-site"}
+        ):
+            return JSONResponse({"detail": "Untrusted request origin."}, status_code=403)
     if (
         request.method == "OPTIONS"
         or not path.startswith("/api/v1")
         or path in PUBLIC_API_PATHS
     ):
-        return await call_next(request)
+        response = await call_next(request)
+        if path.startswith("/api/v1/auth/"):
+            response.headers["Cache-Control"] = "no-store"
+        return response
 
     user = auth_service.authenticate_request(request)
     if not user:
-        origin = request.headers.get("origin", "")
-        cors_headers = {}
-        if origin in settings.CORS_ORIGINS:
-            cors_headers = {
-                "Access-Control-Allow-Origin": origin,
-                "Access-Control-Allow-Credentials": "true",
-                "Access-Control-Allow-Headers": request.headers.get("access-control-request-headers", "*"),
-                "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
-                "Vary": "Origin",
-            }
         return JSONResponse(
             {"detail": "Authentication is required."},
             status_code=401,
-            headers={"WWW-Authenticate": "Bearer", **cors_headers},
+            headers={"WWW-Authenticate": "Bearer", "Cache-Control": "no-store"},
         )
     request.state.user = user
     return await call_next(request)
+
+# Wrap authentication so allowed browser clients can read 401 responses.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(auth.router)
 app.include_router(bots.router)

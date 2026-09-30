@@ -1,8 +1,9 @@
 """Authentication primitives for the single-owner local deployment."""
 
+import hashlib
 import os
 import secrets
-import time
+from time import monotonic
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -17,11 +18,11 @@ SESSION_COOKIE = "open_dots_session"
 
 
 class AuthService:
-    """Validate the owner token and issue separate, short-lived browser sessions.
+    """Exchange an explicit owner credential for a revocable browser session.
 
-    With no environment token, the owner token is generated in a mode-0600 file.
-    A client must present that token to log in; source address alone never grants
-    an owner session because container and proxy traffic can appear as loopback.
+    Peer addresses are not identity: container gateways and reverse proxies can
+    make untrusted clients appear to originate from loopback. Session tokens are
+    separate random values, stored as hashes in memory and invalidated on restart.
     """
 
     def __init__(self, data_dir: Optional[Path] = None):
@@ -49,7 +50,19 @@ class AuthService:
         return token
 
     def authenticate_token(self, token: Optional[str]) -> bool:
-        return bool(token) and secrets.compare_digest(token, self.token)
+        return bool(token) and secrets.compare_digest(token.encode("utf-8"), self.token.encode("utf-8"))
+
+    def authenticate_session(self, token: Optional[str]) -> bool:
+        if not token or len(token) > 128:
+            return False
+        digest = hashlib.sha256(token.encode("utf-8")).hexdigest()
+        expires = self._sessions.get(digest)
+        if expires is None:
+            return False
+        if monotonic() >= expires:
+            self._sessions.pop(digest, None)
+            return False
+        return True
 
     def authenticate_request(self, request: Request) -> Optional[Dict[str, str]]:
         authorization = request.headers.get("authorization", "")
@@ -57,38 +70,39 @@ class AuthService:
         if scheme.lower() == "bearer" and self.authenticate_token(bearer.strip()):
             return self.user
 
-        session = request.cookies.get(SESSION_COOKIE, "")
-        expires = self._sessions.get(session, 0)
-        if expires > time.time():
+        if self.authenticate_session(request.cookies.get(SESSION_COOKIE)):
             return self.user
-        self._sessions.pop(session, None)
         return None
 
     def can_bootstrap(self, request: Request) -> bool:
-        # A loopback peer is not proof of an owner: Docker containers and
-        # same-host proxies may also appear as loopback to the API.
+        # Retained for the status API's bootstrap_available field.
         return False
 
-    def set_session_cookie(self, response: Response, *, secure: Optional[bool] = None) -> None:
-        session = secrets.token_urlsafe(32)
-        self._sessions[session] = time.time() + settings.AUTH_SESSION_MAX_AGE
+    def set_session_cookie(self, response: Response, previous_token: Optional[str] = None, *, secure: bool = False) -> None:
+        self.revoke_session(previous_token)
+        now = monotonic()
+        self._sessions = {key: expiry for key, expiry in self._sessions.items() if expiry > now}
+        while len(self._sessions) >= 128:
+            self._sessions.pop(next(iter(self._sessions)))
+        session_token = secrets.token_urlsafe(32)
+        digest = hashlib.sha256(session_token.encode("ascii")).hexdigest()
+        self._sessions[digest] = now + settings.AUTH_SESSION_MAX_AGE
         response.set_cookie(
             SESSION_COOKIE,
-            session,
+            session_token,
             max_age=settings.AUTH_SESSION_MAX_AGE,
             httponly=True,
-            secure=settings.AUTH_COOKIE_SECURE if secure is None else secure,
+            secure=settings.AUTH_COOKIE_SECURE or secure,
             samesite="lax",
         )
+
+    def revoke_session(self, token: Optional[str]) -> None:
+        if token:
+            self._sessions.pop(hashlib.sha256(token.encode("utf-8")).hexdigest(), None)
 
     @staticmethod
     def clear_session_cookie(response: Response) -> None:
         response.delete_cookie(SESSION_COOKIE, httponly=True, samesite="lax")
-
-    def clear_request_session(self, request: Request, response: Response) -> None:
-        session = request.cookies.get(SESSION_COOKIE, "")
-        self._sessions.pop(session, None)
-        self.clear_session_cookie(response)
 
 
 auth_service = AuthService()

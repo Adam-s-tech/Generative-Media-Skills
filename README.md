@@ -60,7 +60,9 @@ npm install
 npm run dev
 ```
 
-Open `http://127.0.0.1:3000`. You can enter the provider key in App Settings instead of setting the environment variable. The server creates local session and encryption keys under its data directory on first start.
+Open `http://127.0.0.1:3000` and sign in with the Open Dots owner token. On first start, the server creates `.auth-token` under `DATA_DIR` (default `~/.open-dots`). Read that file locally and paste its value into the sign-in form, or use the value of `APP_AUTH_TOKEN` if you configured one. This is a separate credential from your model provider API key, which you enter in App Settings after signing in. Never commit, share, or put the owner token in a public frontend environment variable.
+
+Browser sessions use distinct HttpOnly cookies with server-enforced expiry. Sign out revokes the current session, and restarting the API invalidates all browser sessions. Direct API clients can continue to send the owner token as a Bearer credential. Loopback requests, including container gateway and reverse-proxy traffic, must authenticate too.
 
 ## Model provider
 
@@ -83,12 +85,14 @@ Set `model_ids` to the service's supported chat model IDs and `default_model` to
 | `YDC_API_KEY` | empty | Optional You.com API key for `/search`; the keyless free profile is used when unset |
 | `DATA_DIR` | `~/.open-dots` | SQLite state and local keys |
 | `APP_ENCRYPTION_KEY` | generated in `DATA_DIR` | Optional Fernet key for encrypted credentials |
-| `APP_AUTH_TOKEN` | generated in `DATA_DIR` | Bearer token for direct or non-loopback API access |
+| `APP_AUTH_TOKEN` | generated in `DATA_DIR` | Server-side owner credential for sign-in and direct API access |
 | `WORKSPACE_ROOT` | project root | Directory boundary for approved workspace actions |
 | `COMPUTER_PROVIDER` | `fake` | Computer provider: `fake`, `docker`, or `remote` |
 | `HOST` / `PORT` | `127.0.0.1` / `8000` | API bind address |
 
-The first API start creates an owner token at `~/.open-dots/.auth-token` (or under `DATA_DIR`). The web client prompts for that token and exchanges it for a separate HttpOnly session cookie. For non-loopback access, set `APP_AUTH_TOKEN` on the server, use HTTPS, and set a narrow `CORS_ORIGINS` list. Never set the owner token in a `NEXT_PUBLIC_*` variable because Next.js embeds those values in public JavaScript.
+For non-loopback access, set `APP_AUTH_TOKEN` only on the server, use HTTPS with `AUTH_COOKIE_SECURE=1`, and set a narrow `CORS_ORIGINS` list. Configure the public API address with `NEXT_PUBLIC_API_URL`, and sign in through the form; do not embed credentials in `NEXT_PUBLIC_*` variables. Keep the UI and API on the same site so the browser can send the session cookie. The built-in session store targets one API process; sessions are not shared between workers or instances.
+
+If you previously built with `NEXT_PUBLIC_API_TOKEN`, rotate the owner credential, remove that variable, and rebuild/redeploy the client. Existing public assets may contain the old credential. Old cookies containing the master token are no longer accepted; users must sign in again.
 
 ## Web search
 
