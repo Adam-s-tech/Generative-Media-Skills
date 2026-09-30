@@ -31,7 +31,7 @@ async def get_history(thread_id: str):
 async def send_message(req: TurnRequest):
     # Store user message
     user_msg = {
-        "id": f"msg-{uuid.uuid4().hex[:6]}",
+        "id": f"msg-{uuid.uuid4().hex}",
         "thread_id": req.thread_id,
         "bot_id": req.bot_id,
         "sender": "user",
@@ -73,7 +73,7 @@ async def stream_turn(thread_id: str, model: Optional[str] = Query(None)):
 
 
     async def event_generator():
-        bot_msg_id = f"msg-{uuid.uuid4().hex[:6]}"
+        bot_msg_id = f"msg-{uuid.uuid4().hex}"
         accumulated_text = ""
         tool_context = ""
 
