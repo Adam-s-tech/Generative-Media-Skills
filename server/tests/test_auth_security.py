@@ -112,3 +112,37 @@ class AuthenticationBoundaryTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.headers["access-control-allow-origin"], origin)
         self.assertEqual((await self.login(headers={"Origin": origin})).status_code, 200)
         self.assertEqual((await self.client.get("/api/v1/bots", headers={"Origin": origin})).status_code, 200)
+
+    async def test_simple_request_without_content_type_cannot_change_settings(self):
+        await self.login()
+        # A Blob with no MIME type is a browser simple request: no preflight.
+        response = await self.client.post(
+            "/api/v1/settings",
+            content=b'{"default_model":"csrf-test-model"}',
+            headers={"Origin": "http://127.0.0.1:9999", "Sec-Fetch-Site": "same-site"},
+        )
+        self.assertEqual(response.status_code, 403)
+
+    async def test_session_refresh_does_not_mint_sessions_and_relogin_revokes_old_cookie(self):
+        await self.login()
+        first = self.client.cookies.get(SESSION_COOKIE)
+        for _ in range(3):
+            response = await self.client.get("/api/v1/auth/session")
+            self.assertEqual(response.status_code, 200)
+            self.assertNotIn("set-cookie", response.headers)
+        self.assertEqual(len(self.service._sessions), 1)
+        await self.login()
+        self.assertFalse(self.service.authenticate_session(first))
+        self.assertEqual(len(self.service._sessions), 1)
+        for _ in range(130):
+            self.client.cookies.clear()
+            await self.login()
+        self.assertLessEqual(len(self.service._sessions), 128)
+
+    async def test_secure_cookie_is_enabled_by_https_or_explicit_configuration(self):
+        with patch.object(settings, "AUTH_COOKIE_SECURE", True):
+            response = await self.login()
+            self.assertIn("Secure", response.headers["set-cookie"])
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="https://api.example") as client:
+            response = await client.post("/api/v1/auth/login", json={"token": self.service.token})
+            self.assertIn("Secure", response.headers["set-cookie"])

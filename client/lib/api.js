@@ -285,7 +285,13 @@ export async function saveSettings(settingsData) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(settingsData),
   });
-  if (!res.ok) throw new Error('Failed to save settings');
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    const detail = Array.isArray(error.detail)
+      ? error.detail.map((item) => item.msg).join(' ')
+      : error.detail;
+    throw new Error(detail || 'Failed to save settings');
+  }
   return res.json();
 }
 

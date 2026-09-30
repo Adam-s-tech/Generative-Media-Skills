@@ -6,6 +6,7 @@ always rejected.
 """
 
 from dataclasses import dataclass
+import asyncio
 from datetime import datetime, timezone
 import inspect
 import uuid
@@ -152,6 +153,8 @@ class ActionGateway:
         }
         self._pending: Dict[str, Tuple[ActionRequest, Any]] = {}
         self._decisions: Dict[str, str] = {}
+        self._decision_locks: Dict[str, asyncio.Lock] = {}
+        self._execution_locks: Dict[str, asyncio.Lock] = {}
 
     def register_action(
         self,
@@ -299,25 +302,25 @@ class ActionGateway:
     async def wait_for_decision(self, request: ActionRequest) -> str:
         if not request.requires_approval:
             return "allow"
-        if request.request_id in self._decisions:
-            return self._decisions[request.request_id]
-        if request.request_id not in self._pending:
-            self._audit_action("action.expired", request, state="expired")
-            self._decisions[request.request_id] = "expired"
-            return "expired"
+        lock = self._decision_locks.setdefault(request.request_id, asyncio.Lock())
+        async with lock:
+            if request.request_id in self._decisions:
+                return self._decisions[request.request_id]
+            if request.request_id not in self._pending:
+                return "expired"
 
-        decision = await self.approvals.wait(request.request_id)
-        self._decisions[request.request_id] = decision
-        if decision == "allow":
-            self._audit_action("action.approved", request, decision=decision, state="approved")
-        elif decision == "deny":
-            self._audit_action("action.denied", request, decision=decision, state="denied")
-        else:
-            self._audit_action("action.expired", request, decision=decision, state="expired")
-        if decision != "allow":
-            self._pending.pop(request.request_id, None)
-            self._decisions.pop(request.request_id, None)
-        return decision
+            decision = await self.approvals.wait(request.request_id)
+            self._decisions[request.request_id] = decision
+            if decision == "allow":
+                self._audit_action("action.approved", request, decision=decision, state="approved")
+            elif decision == "deny":
+                self._audit_action("action.denied", request, decision=decision, state="denied")
+            else:
+                self._audit_action("action.expired", request, decision=decision, state="expired")
+            if decision != "allow":
+                self._pending.pop(request.request_id, None)
+                self._decisions.pop(request.request_id, None)
+            return decision
 
     def get_pending_request(self, request_id: str) -> Optional[ActionRequest]:
         """Return a pending request for an authenticated continuation endpoint."""
@@ -347,6 +350,11 @@ class ActionGateway:
         return redact_sensitive(summary)
 
     async def execute(self, request: ActionRequest) -> ActionResult:
+        lock = self._execution_locks.setdefault(request.request_id, asyncio.Lock())
+        async with lock:
+            return await self._execute_once(request)
+
+    async def _execute_once(self, request: ActionRequest) -> ActionResult:
         pending = self._pending.get(request.request_id)
         if pending is None:
             raise ActionGatewayError("Action request is no longer available for execution.")

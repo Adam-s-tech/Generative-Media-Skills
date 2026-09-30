@@ -78,7 +78,7 @@ class AuthService:
         # Retained for the status API's bootstrap_available field.
         return False
 
-    def set_session_cookie(self, response: Response, previous_token: Optional[str] = None) -> None:
+    def set_session_cookie(self, response: Response, previous_token: Optional[str] = None, *, secure: bool = False) -> None:
         self.revoke_session(previous_token)
         now = monotonic()
         self._sessions = {key: expiry for key, expiry in self._sessions.items() if expiry > now}
@@ -92,7 +92,7 @@ class AuthService:
             session_token,
             max_age=settings.AUTH_SESSION_MAX_AGE,
             httponly=True,
-            secure=settings.AUTH_COOKIE_SECURE,
+            secure=settings.AUTH_COOKIE_SECURE or secure,
             samesite="lax",
         )
 

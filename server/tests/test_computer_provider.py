@@ -1,6 +1,5 @@
 import tempfile
 import unittest
-from app.services.auth_service import auth_service
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -13,9 +12,11 @@ from app.services.workspace_service import WorkspaceService
 
 try:
     from app.main import app
+    from app.services.auth_service import auth_service
     from app.services.storage_service import storage_service
 except ModuleNotFoundError:
     app = None
+    auth_service = None
     storage_service = None
 
 

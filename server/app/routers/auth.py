@@ -43,7 +43,7 @@ async def establish_session(request: Request, response: Response):
     if not user:
         raise _authentication_error()
     if not auth_service.authenticate_session(request.cookies.get(SESSION_COOKIE)):
-        auth_service.set_session_cookie(response)
+        auth_service.set_session_cookie(response, secure=request.url.scheme == "https")
     return _session_payload()
 
 
@@ -51,7 +51,7 @@ async def establish_session(request: Request, response: Response):
 async def login(credentials: LoginRequest, request: Request, response: Response):
     if not auth_service.authenticate_token(credentials.token):
         raise _authentication_error()
-    auth_service.set_session_cookie(response, request.cookies.get(SESSION_COOKIE))
+    auth_service.set_session_cookie(response, request.cookies.get(SESSION_COOKIE), secure=request.url.scheme == "https")
     return _session_payload()
 
 
