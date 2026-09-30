@@ -17,7 +17,7 @@ import {
   updateBot 
 } from '../lib/api';
 
-export default function Dashboard() {
+export default function Dashboard({ onLogout }) {
   const [bots, setBots] = useState([]);
   const [models, setModels] = useState([]);
   const [activeBotId, setActiveBotId] = useState('');
@@ -102,6 +102,7 @@ export default function Dashboard() {
     <div className="flex h-screen w-screen overflow-hidden bg-[#09090b] text-zinc-100 font-sans">
       {/* Sidebar Navigation & Bot Roster */}
       <Sidebar
+        onLogout={onLogout}
         bots={bots}
         activeBotId={activeBotId}
         userName={userName}

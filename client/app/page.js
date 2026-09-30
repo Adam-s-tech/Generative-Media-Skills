@@ -1,7 +1,7 @@
 'use client';
 
-import Dashboard from '../components/Dashboard';
+import AuthenticationGate from '../components/AuthenticationGate';
 
 export default function Home() {
-  return <Dashboard />;
+  return <AuthenticationGate />;
 }

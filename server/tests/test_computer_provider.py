@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+from app.services.auth_service import auth_service
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -167,7 +168,7 @@ class ComputerRouterTests(unittest.IsolatedAsyncioTestCase):
         bot_id = storage_service.get_bots()[0]["id"]
         transport = httpx.ASGITransport(app=app, client=("127.0.0.1", 43124))
         async with httpx.AsyncClient(transport=transport, base_url="http://127.0.0.1") as client:
-            session = await client.get("/api/v1/auth/session")
+            session = await client.post("/api/v1/auth/login", json={"token": auth_service.token})
             self.assertEqual(session.status_code, 200)
 
             initial = await client.get(f"/api/v1/computers/{bot_id}")
