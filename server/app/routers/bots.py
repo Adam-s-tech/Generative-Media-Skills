@@ -67,13 +67,12 @@ async def update_bot(bot_id: str, updates: Dict[str, Any]):
 @router.delete("/{bot_id}")
 async def delete_bot(bot_id: str):
     bots = storage_service.get_bots()
-    updated = [b for b in bots if b["id"] != bot_id]
-    if len(updated) == len(bots):
+    if not any(bot["id"] == bot_id for bot in bots):
         raise HTTPException(status_code=404, detail="Bot not found")
     status = computer_provider.get_or_create(bot_id)
     try:
         await computer_provider.cleanup(status.computer_id)
     except ComputerProviderError as exc:
         raise HTTPException(status_code=409, detail=f"Could not clean up the bot computer: {exc}") from exc
-    storage_service.save_bots(updated)
+    storage_service.delete_bot(bot_id)
     return {"status": "ok", "deleted_id": bot_id}
